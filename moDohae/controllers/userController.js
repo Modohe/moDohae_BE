@@ -11,10 +11,10 @@ const nodemailer = require('nodemailer'); // 이메일 발송을 위한 nodemail
 // 이메일 인증 코드 전송
 const sendAuthEmail = async (email) => {
   try {
-    // 6자리 숫자 인증 코드 생성
+    // 6자리 인증 코드 생성
     const authCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Redis에 인증 코드 저장 (유효 시간 10분)
+    // Redis에 저장 (유효시간: 10분)
     await new Promise((resolve, reject) => {
       redisClient.setex(email, 600, authCode, (err) => {
         if (err) return reject(err);
@@ -22,16 +22,18 @@ const sendAuthEmail = async (email) => {
       });
     });
 
-    // 실제 이메일 전송 (nodemailer를 사용하여 구현)
-    let transporter = nodemailer.createTransport({
-      service: 'gmail',
+    // Naver SMTP 설정
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.naver.com',
+      port: 465,
+      secure: true, // SSL 사용
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       }
     });
 
-    let mailOptions = {
+    const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
       subject: '이메일 인증 코드',
@@ -40,25 +42,21 @@ const sendAuthEmail = async (email) => {
 
     await transporter.sendMail(mailOptions);
 
-    console.log('이메일 전송 완료: ', email);
+    console.log(`이메일 전송 완료 → ${email}`);
   } catch (err) {
     console.error('이메일 전송 실패:', err);
     throw new Error('이메일 전송에 실패했습니다.');
   }
 };
 
-// 이메일 인증 코드 확인
+// 인증 코드 검증
 const verifyAuthCode = async (email, authCode) => {
   return new Promise((resolve, reject) => {
-    redisClient.get(email, (err, storedAuthCode) => {
-      if (err) {
-        return reject('인증 코드 확인 중 오류 발생');
-      }
-      if (!storedAuthCode) {
-        return reject('인증 코드가 만료되었거나 존재하지 않습니다.');
-      }
-      if (storedAuthCode === authCode) {
-        resolve(true);  // 인증 코드 일치
+    redisClient.get(email, (err, storedCode) => {
+      if (err) return reject('인증 코드 확인 중 오류 발생');
+      if (!storedCode) return reject('인증 코드가 만료되었거나 존재하지 않습니다.');
+      if (storedCode === authCode) {
+        resolve(true);
       } else {
         reject('잘못된 인증 코드입니다.');
       }

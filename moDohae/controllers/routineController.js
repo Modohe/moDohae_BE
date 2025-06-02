@@ -1,4 +1,5 @@
 const { Routine } = require('../models/routine');
+const { Calendar } = require('../models/calendar');
 const { verifyToken } = require('../utils/auth');
 
 // 루틴 조회
@@ -45,6 +46,39 @@ const createRoutine = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: '루틴 등록에 실패했습니다.' });
+  }
+};
+
+// 루틴 선택 시 캘린더에 등록
+const addRoutineToCalendar = async (req, res) => {
+  const { token } = req.query;
+  const { routineId } = req.body;
+
+  try {
+    if (!token) return res.status(401).json({ message: '로그인이 필요합니다.' });
+    const user = verifyToken(token);
+    if (!user) return res.status(403).json({ message: '유효하지 않은 토큰입니다.' });
+    if (!routineId) return res.status(400).json({ message: '루틴 ID가 필요합니다.' });
+
+    const routine = await Routine.findByPk(routineId);
+    if (!routine) return res.status(404).json({ message: '루틴을 찾을 수 없습니다.' });
+    if (routine.user_id !== user.id) return res.status(403).json({ message: '해당 루틴에 대한 권한이 없습니다.' });
+
+    // 캘린더에 등록
+    await Calendar.create({
+      user_id: user.id,
+      title: routine.name,
+      datetime: routine.time ? `${new Date().toISOString().slice(0, 10)}T${routine.time}` : new Date(),
+      category: 'routine',
+      start_date: null,
+      end_date: null,
+      created_at: new Date(),
+    });
+
+    return res.status(201).json({ message: '루틴이 캘린더에 등록되었습니다.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: '캘린더 등록에 실패했습니다.' });
   }
 };
 
@@ -103,4 +137,5 @@ module.exports = {
   createRoutine,
   updateRoutine,
   deleteRoutine,
+  addRoutineToCalendar, // 추가
 };

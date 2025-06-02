@@ -6,7 +6,7 @@ const userRouter = require('./routes/users');
 const calendarRouter = require('./routes/calendars');
 const challengeRouter = require('./routes/challenges');
 const rankRouter = require('./routes/ranks');
-const routineRouter = require('./routes/routins');
+const routineRouter = require('./routes/routines');
 const aiRoutineRouter = require('./routes/aiRoutines');
 const aiFeedbackRouter = require('./routes/aiFeedbacks');
 

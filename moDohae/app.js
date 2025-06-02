@@ -7,7 +7,7 @@ const calendarRouter = require('./routes/calendars');
 const challengeRouter = require('./routes/challenges');
 const rankRouter = require('./routes/ranks');
 const routineRouter = require('./routes/routins');
-const aiRoutineRouter = require('./routes/aiRoutines');
+const aiRoutineRouter = require('./routes/aiRoutins');
 const aiFeedbackRouter = require('./routes/aiFeedbacks');
 
 const app = express();

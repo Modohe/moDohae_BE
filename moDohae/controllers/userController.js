@@ -158,10 +158,74 @@ const logout = async (req, res) => {
   }
 };
 
+// 사용자 정보 조회
+const getUserInfo = async (req, res) => {
+  const { token } = req.query;
+
+  try {
+    if (!token) return res.status(401).json({ message: '로그인이 필요합니다.' });
+
+    // JWT 토큰 검증
+    const decoded = jwt.verify(token, process.env.SECRET || process.env.JWT_ACCESS_SECRET);
+    const userid = decoded.userid;
+
+    const user = await User.findOne({
+      where: { userid },
+      attributes: ['idx', 'userid', 'email', 'nickname', 'birth', 'score', 'createdAt', 'updatedAt']
+    });
+
+    if (!user) return res.status(404).json({ message: '유저를 찾을 수 없습니다.' });
+
+    return res.status(200).json({ user });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ message: '유저 정보 조회에 실패했습니다.' });
+  }
+};
+
+// 사용자 정보 수정
+const updateUserInfo = async (req, res) => {
+  const { token } = req.query;
+  const { email, nickname, birth } = req.body;
+
+  try {
+    if (!token) return res.status(401).json({ message: '로그인이 필요합니다.' });
+
+    // JWT 토큰 검증
+    const decoded = jwt.verify(token, process.env.SECRET || process.env.JWT_ACCESS_SECRET);
+    const userid = decoded.userid;
+
+    const user = await User.findOne({ where: { userid } });
+    if (!user) return res.status(404).json({ message: '유저를 찾을 수 없습니다.' });
+
+    // 중복 닉네임 체크 (본인 제외)
+    if (nickname) {
+      const existUserNick = await User.findOne({ where: { nickname, userid: { [Sequelize.Op.ne]: userid } } });
+      if (existUserNick) {
+        return res.status(409).json({ message: "중복된 닉네임입니다." });
+      }
+    }
+
+    // 정보 업데이트
+    if (email) user.email = email;
+    if (nickname) user.nickname = nickname;
+    if (birth) user.birth = birth;
+
+    await user.save();
+
+    return res.status(200).json({ message: '유저 정보가 수정되었습니다.', user });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ message: '유저 정보 수정에 실패했습니다.' });
+  }
+};
+
 module.exports = {
-  signup, 
-  login, 
-  logout, 
-  sendAuthEmail, 
-  verifyAuthCode
- };
+  signup,
+  login,
+  logout,
+  sendAuthEmail,
+  verifyAuthCode,
+  getUserInfo,
+  updateUserInfo, // 추가
+};

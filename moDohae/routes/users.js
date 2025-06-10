@@ -10,6 +10,6 @@ router.post('/logout', logout);
 router.post('/send-auth-email', sendAuthEmail);
 router.post('/verify-auth-code', verifyAuthCode);
 router.get('/info', getUserInfo);
-router.put('/info', updateUserInfo);
+router.patch('/info', updateUserInfo);
 
 module.exports = router;

@@ -12,7 +12,7 @@ router.get('/schedule', viewSchedule);
 // 일정 등록
 router.post('/schedule', writeSchedule);
 // 일정 수정
-router.put('/schedule', updateSchedule);
+router.patch('/schedule', updateSchedule);
 // 일정 삭제
 router.delete('/schedule', deleteSchedule);
 
